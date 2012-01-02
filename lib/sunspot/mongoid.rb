@@ -73,4 +73,47 @@ module Sunspot
       Sunspot.index! self
     end
   end
+  
+  class <<self
+    attr_writer :configuration
+
+    def configuration(path = nil)
+      @configuration ||= Sunspot::Mongoid::Configuration.new(path)
+    end
+
+    def reset
+      @configuration = nil
+    end
+    def build_session(configuration = self.configuration)
+      if configuration.has_master?
+        SessionProxy::MasterSlaveSessionProxy.new(
+          SessionProxy::ThreadLocalSessionProxy.new(master_config(configuration)),
+          SessionProxy::ThreadLocalSessionProxy.new(slave_config(configuration))
+        )
+      else
+        SessionProxy::ThreadLocalSessionProxy.new(slave_config(configuration))
+      end
+    end
+    private
+
+    def master_config(sunspot_mongoid_configuration)
+      config = Sunspot::Configuration.build
+      config.solr.url = URI::HTTP.build(
+        :host => sunspot_mongoid_configuration.master_hostname,
+        :port => sunspot_mongoid_configuration.master_port,
+        :path => sunspot_mongoid_configuration.master_path
+      ).to_s
+      config
+    end
+
+    def slave_config(sunspot_mongoid_configuration)
+      config = Sunspot::Configuration.build
+      config.solr.url = URI::HTTP.build(
+        :host => sunspot_mongoid_configuration.hostname,
+        :port => sunspot_mongoid_configuration.port,
+        :path => sunspot_mongoid_configuration.path
+      ).to_s
+      config
+    end
+  end
 end
