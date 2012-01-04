@@ -41,7 +41,10 @@ module Sunspot
       # we'll change it to work more efficiently with Mongoid.
       def solr_index(opt={})
         0.step(count, 1000) do |offset|
-          records = limit(1000).skip(offset).to_a
+          records = []
+          limit(1000).skip(offset).each do |r|
+            records << r
+          end
           Sunspot.index!(records)
         end
       end
