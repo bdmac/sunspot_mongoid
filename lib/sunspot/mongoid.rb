@@ -78,6 +78,8 @@ module Sunspot
     end
     def _update_index
       Sunspot.index! self
+    rescue RSolr::Error::Http => e
+      puts "  Error updating Sunspot index: #{e}"
     end
   end
   
