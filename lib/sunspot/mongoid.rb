@@ -45,7 +45,7 @@ module Sunspot
           limit(5000).skip(offset).each do |r|
             records << r
           end
-          Sunspot.index(records)
+          Sunspot.index(records.select { |model| model.indexable? })
         end
         Sunspot.commit
       end
